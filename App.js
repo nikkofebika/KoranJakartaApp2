@@ -1,14 +1,14 @@
 import * as React from 'react';
+import 'react-native-gesture-handler';
 import {NavigationContainer} from '@react-navigation/native';
-import {Box, NativeBaseProvider, Text} from 'native-base';
+import {NativeBaseProvider} from 'native-base';
+import Routes from './src/config/routes';
 
 export default function App() {
   return (
     <NavigationContainer>
       <NativeBaseProvider>
-        <Box flex={1} bg="#fff" alignItems="center" justifyContent="center">
-          <Text>Open up App.js to start working on your app!</Text>
-        </Box>
+        <Routes />
       </NativeBaseProvider>
     </NavigationContainer>
   );
