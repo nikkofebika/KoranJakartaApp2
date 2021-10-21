@@ -17,7 +17,7 @@ const Stack = createStackNavigator();
 function HomeStackScreen() {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="HomeStack" component={Home} />
       <Stack.Screen name="DetailArticle" component={DetailArticle} />
     </Stack.Navigator>
   );
@@ -47,7 +47,7 @@ export default function Routes() {
         tabBarInactiveTintColor: 'gray',
       })}>
       <Tab.Screen
-        name="HomeStackScreen"
+        name="Home"
         component={HomeStackScreen}
         options={({navigation}) => ({
           header: () => {
