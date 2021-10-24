@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   FlatList,
   HStack,
@@ -12,12 +12,9 @@ import {
 import {
   ActivityIndicator,
   Dimensions,
-  StyleSheet,
+  LogBox,
   TouchableOpacity,
-  View,
 } from 'react-native';
-import ScrollableTabView from 'react-native-scrollable-tab-view';
-import TabBar from 'react-native-underline-tabbar';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {API_URL, KJ_URL} from '../config/const/url';
 import Carousel from 'react-native-banner-carousel';
@@ -25,8 +22,21 @@ import ArticleList from '../components/molecules/ArticleList';
 import LogoKJ from '../assets/logo/logokj.png';
 
 const BannerWidth = Dimensions.get('window').width;
+
+const Category = ({id, category, seo_category, onPress, style}) => {
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <Text style={[style, {marginRight: 20}]}>{category}</Text>
+    </TouchableOpacity>
+  );
+};
+
 const Home = ({navigation}) => {
-  const [selectedMenu, setSelectedMenu] = useState(1);
+  const [endpointTerbaru, setEndpointTerbaru] = useState(
+    API_URL + 'article?limit=15',
+  );
+  const [selectedCategory, setSelectedCategory] = useState(24);
+  const [categories, setCategories] = useState([]);
   const [isEnd, setIsEnd] = useState(false);
   const [offset, setOffset] = useState(15);
   const [dataHeadline, setDataHeadline] = useState([]);
@@ -55,11 +65,26 @@ const Home = ({navigation}) => {
 
   useEffect(() => {
     console.log('render useEffect');
+    fetchCategories();
     fetchHeadline();
     fetchTopPopuler();
     fetchHighlight();
-    fetchArticles();
+    LogBox.ignoreLogs(['Animated: `useNativeDriver`']);
   }, []);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [selectedCategory]);
+
+  const fetchCategories = () => {
+    fetch(API_URL + 'category')
+      .then(response => response.json())
+      .then(res => {
+        console.log('fetchCategories', res);
+        setCategories(res);
+      })
+      .catch(error => console.error(error));
+  };
 
   const fetchHeadline = () => {
     console.log('fetchHeadline');
@@ -93,7 +118,7 @@ const Home = ({navigation}) => {
 
   const fetchArticles = () => {
     console.log('fetchArticles');
-    fetch(API_URL + 'article')
+    fetch(endpointTerbaru + 'article')
       .then(response => response.json())
       .then(res => {
         setArticles(res);
@@ -137,147 +162,128 @@ const Home = ({navigation}) => {
     );
   };
 
-  const Page = ({label}) => (
-    <View style={styles.container}>
-      <Text style={styles.welcome}>{label}</Text>
-      <Text style={styles.instructions}>To get started, edit index.ios.js</Text>
-      <Text style={styles.instructions}>
-        Press Cmd+R to reload,{'\n'}
-        Cmd+D or shake for dev menu
-      </Text>
-    </View>
-  );
-
   return (
-    <FlatList
-      safeArea
-      showsVerticalScrollIndicator={false}
-      ListHeaderComponent={() => {
-        return (
-          <VStack>
-            <View style={[styles.container, {paddingTop: 20}]}>
-              <ScrollableTabView
-                tabBarActiveTextColor="#53ac49"
-                renderTabBar={() => <TabBar underlineColor="#53ac49" />}>
-                <Page tabLabel={{label: 'Page #1'}} label="Page #1" />
-                <Page
-                  tabLabel={{label: 'Page #2 aka Long!', badge: 3}}
-                  label="Page #2 aka Long!"
-                />
-                <Page tabLabel={{label: 'Page #3'}} label="Page #3" />
-                <Page
-                  tabLabel={{label: 'Page #4 aka Page'}}
-                  label="Page #4 aka Page"
-                />
-                <Page tabLabel={{label: 'Page #5'}} label="Page #5" />
-              </ScrollableTabView>
-            </View>
-            <Carousel
-              autoplay
-              autoplayTimeout={5000}
-              loop
-              index={0}
-              pageSize={BannerWidth}>
-              {dataHeadline.map((data, index) => renderCarousel(data, index))}
-            </Carousel>
-            <VStack mx={3}>
-              <Text bold fontSize="xl">
-                Populer
-              </Text>
-              <Divider bg="red.700" my={0.5} />
-              {topPopuler.map((item, index) => (
-                <Box key={item.id}>
-                  <ArticleList item={item} mx={0} />
-                  {index < 4 && (
-                    <Divider borderBottomWidth="0.2" borderColor="gray.400" />
-                  )}
-                </Box>
-              ))}
-            </VStack>
-            <VStack mx={3}>
-              <Text bold fontSize="xl">
-                Highlight
-              </Text>
-              <Divider bg="red.700" my={0.5} />
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                my={2}>
-                {dataHighlight.map((item, index) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    onPress={() =>
-                      navigation.navigate('Highlight', {
-                        highlight_id: item.id,
-                        highlight_title: item.title,
-                        highlight_seo_title: item.seo_title,
-                        highlight_image: KJ_URL + item.image,
-                        highlight_description: item.description,
-                      })
-                    }>
-                    <Image
-                      source={{
-                        uri: KJ_URL + item.image,
-                      }}
-                      borderRadius="sm"
-                      alt="Foto Berita"
-                      height={200}
-                      width={150}
-                      mr={2}
-                    />
-                  </TouchableOpacity>
+    <>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {categories.map((c, index) => {
+          return (
+            <Category
+              key={c.id}
+              id={c.id}
+              category={c.category}
+              seo_category={c.seo_category}
+              style={{
+                fontSize: selectedCategory === c.id ? 17 : 16,
+                fontWeight: selectedCategory === c.id ? 'bold' : 'normal',
+                color: selectedCategory === c.id ? 'blue' : 'black',
+              }}
+              onPress={() => {
+                setSelectedCategory(c.id);
+                setOffset(0);
+                setEndpointTerbaru(
+                  c.id === 24
+                    ? API_URL + 'article?limit=15'
+                    : endpointTerbaru + '&category_id=' + c.id,
+                );
+              }}
+            />
+          );
+        })}
+      </ScrollView>
+      <FlatList
+        safeArea
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={() => {
+          return selectedCategory == 24 ? (
+            <VStack>
+              <Carousel
+                autoplay
+                autoplayTimeout={5000}
+                loop
+                index={0}
+                pageSize={BannerWidth}>
+                {dataHeadline.map((data, index) => renderCarousel(data, index))}
+              </Carousel>
+              <VStack mx={3}>
+                <Text bold fontSize="xl">
+                  Populer
+                </Text>
+                <Divider bg="red.700" my={0.5} />
+                {topPopuler.map((item, index) => (
+                  <Box key={item.id}>
+                    <ArticleList item={item} mx={0} />
+                    {index < 4 && (
+                      <Divider borderBottomWidth="0.2" borderColor="gray.400" />
+                    )}
+                  </Box>
                 ))}
-              </ScrollView>
+              </VStack>
+              <VStack mx={3}>
+                <Text bold fontSize="xl">
+                  Highlight
+                </Text>
+                <Divider bg="red.700" my={0.5} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  my={2}>
+                  {dataHighlight.map((item, index) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      onPress={() =>
+                        navigation.navigate('Highlight', {
+                          highlight_id: item.id,
+                          highlight_title: item.title,
+                          highlight_seo_title: item.seo_title,
+                          highlight_image: KJ_URL + item.image,
+                          highlight_description: item.description,
+                        })
+                      }>
+                      <Image
+                        source={{
+                          uri: KJ_URL + item.image,
+                        }}
+                        borderRadius="sm"
+                        alt="Foto Berita"
+                        height={200}
+                        width={150}
+                        mr={2}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </VStack>
+              <VStack mx={3}>
+                <Text bold fontSize="xl">
+                  Terbaru
+                </Text>
+                <Divider bg="red.700" my={0.5} />
+              </VStack>
             </VStack>
-            <VStack mx={3}>
-              <Text bold fontSize="xl">
-                Terbaru
-              </Text>
-              <Divider bg="red.700" my={0.5} />
-            </VStack>
-          </VStack>
-        );
-      }}
-      data={articles}
-      renderItem={renderItem}
-      keyExtractor={(item, index) => index}
-      onEndReached={() => {
-        setIsEnd(true);
-        fetch(API_URL + `article?offset=${offset}`)
-          .then(response => response.json())
-          .then(res => {
-            setArticles([...articles, ...res]);
-            setIsEnd(false);
-            setOffset(offset + 15);
-          })
-          .catch(error => console.error(error));
-      }}
-      onEndReachedThreshold={0.5}
-      ListFooterComponent={() => {
-        return isEnd ? (
-          <ActivityIndicator color="black" style={{margin: 15}} />
-        ) : null;
-      }}
-    />
+          ) : null;
+        }}
+        data={articles}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => index}
+        onEndReached={() => {
+          setIsEnd(true);
+          fetch(endpointTerbaru + `article?offset=${offset}`)
+            .then(response => response.json())
+            .then(res => {
+              setArticles([...articles, ...res]);
+              setIsEnd(false);
+              setOffset(offset + 15);
+            })
+            .catch(error => console.error(error));
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={() => {
+          return isEnd ? (
+            <ActivityIndicator color="black" style={{margin: 15}} />
+          ) : null;
+        }}
+      />
+    </>
   );
 };
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-    fontSize: 28,
-  },
-});
 export default Home;
