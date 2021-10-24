@@ -6,19 +6,27 @@ import Home from '../../pages/Home';
 import Populer from '../../pages/Populer';
 import Multimedia from '../../pages/Multimedia';
 import Menu from '../../pages/Menu';
-import {HStack, Text, View} from 'native-base';
-import {Image, TouchableOpacity} from 'react-native';
-import LogoKJ from '../../assets/logo/logokj.png';
 import DetailArticle from '../../pages/DetailArticle';
+import Highlight from '../../pages/Highlight';
+import Search from '../../pages/Search';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 function HomeStackScreen() {
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
+    <Stack.Navigator>
       <Stack.Screen name="HomeStack" component={Home} />
       <Stack.Screen name="DetailArticle" component={DetailArticle} />
+      <Stack.Screen name="Highlight" component={Highlight} />
+      <Stack.Screen
+        name="Search"
+        component={Search}
+        options={{
+          title: 'Pencarian Berita',
+          headerTitleAlign: 'center',
+        }}
+      />
     </Stack.Navigator>
   );
 }
@@ -49,22 +57,7 @@ export default function Routes() {
       <Tab.Screen
         name="Home"
         component={HomeStackScreen}
-        options={({navigation}) => ({
-          header: () => {
-            return (
-              <HStack
-                px={3}
-                py={1}
-                alignItems="center"
-                justifyContent="space-between">
-                <Image source={LogoKJ} />
-                <TouchableOpacity>
-                  <Ionicons name="search" size={25} />
-                </TouchableOpacity>
-              </HStack>
-            );
-          },
-        })}
+        options={{headerShown: false}}
       />
       <Tab.Screen name="Populer" component={Populer} />
       <Tab.Screen name="Multimedia" component={Multimedia} />
